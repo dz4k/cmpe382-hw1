@@ -5,11 +5,11 @@
 #include "dynarray.h"
 
 typedef struct {
-    DynArray path;
+  DynArray path;
 } ShellState;
 
-void ShellStateInit(ShellState* state);
+void ShellStateInit(ShellState *state);
 
-void ShellStateFree(ShellState* state);
+void ShellStateFree(ShellState *state);
 
 #endif
