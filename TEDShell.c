@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include "dynarray.h"
+#include "parser.h"
 #include "shell_state.h"
 
 // Use following command to compile:
@@ -31,8 +32,9 @@ enum {
 
 int interactive();
 int batch(int argc, char *const argv[]);
-int runCommand(ShellState *state, char *const input);
-char* findExecutable(ShellState *state, char *const cmd);
+int runLine(ShellState *state, char *const input);
+int runCommand(ShellState *state, Command cmd);
+char *findExecutable(ShellState *state, char *const cmd);
 int runExecutable(char **const argv);
 
 int main(int argc, char *argv[]) {
@@ -58,7 +60,7 @@ int interactive() {
     if (input[0] == EOF) {
       break;
     }
-    int status = runCommand(&state, input);
+    int status = runLine(&state, input);
     if (status == SHELL_ERR) {
       ERROR();
     }
@@ -73,41 +75,39 @@ int batch(int argc, char *const argv[]) {
   return 0;
 }
 
-int runCommand(ShellState *state, char *input) {
-  
-  // Parse
-  DynArray args;
-  DynArrayInit(&args);
-  char *arg;
+int runLine(ShellState *state, char *input) {
 
-  while ((arg = strsep(&input, " ")) != NULL) {
-    DynArrayPush(&args, arg);
-  }
+  // Parse
+  Command cmd = parseCommand(input);
 
   // Execute binary
-  char* binary = findExecutable(state, (char*) args.array[0]);
+  char *binary = findExecutable(state, (char *)cmd.args.array[0]);
   if (binary == NULL) {
-    DynArrayFree(&args);
+    CommandFree(&cmd);
     return SHELL_ERR;
   }
-  args.array[0] = binary;
+  cmd.args.array[0] = binary;
 
-  int status = runExecutable((char**) args.array);
+  int status = runCommand(state, cmd);
 
-  DynArrayFree(&args);
+  CommandFree(&cmd);
   return 0;
 }
 
-char* findExecutable(ShellState *state, char *const cmd) {
+int runCommand(ShellState *state, Command cmd) {
+  return runExecutable((char **)cmd.args.array);
+}
+
+char *findExecutable(ShellState *state, char *const cmd) {
   DynArray path = state->path;
 
   // Path to the executable binary
 
-  char* binpath = (char*) malloc(sizeof(char) * 512);
+  char *binpath = (char *)malloc(sizeof(char) * 512);
   for (int i = 0; i < path.count; i++) {
-    int size = sprintf(binpath, "%s/%s", (char*) path.array[i], cmd);
+    int size = sprintf(binpath, "%s/%s", (char *)path.array[i], cmd);
     if (access(binpath, X_OK) == 0) {
-      binpath = (char*) realloc(binpath, size);
+      binpath = (char *)realloc(binpath, size);
       return binpath;
     }
   }
@@ -117,12 +117,15 @@ char* findExecutable(ShellState *state, char *const cmd) {
 
 int runExecutable(char **const argv) {
   int wstatus;
- 
+
   pid_t pid = fork();
-  
-  if (pid < 0) return -1;
-  else if (pid == 0) execv(argv[0], argv);
-  else waitpid(pid, &wstatus, 0);
+
+  if (pid < 0)
+    return -1;
+  else if (pid == 0)
+    execv(argv[0], argv);
+  else
+    waitpid(pid, &wstatus, 0);
 
   return wstatus;
 }
