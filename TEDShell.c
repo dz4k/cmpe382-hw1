@@ -6,10 +6,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "builtins.h"
 #include "dynarray.h"
 #include "parser.h"
 #include "shell_state.h"
-#include "builtins.h"
 
 // Use following command to compile:
 // g++ -g TEDShell.c dynarray.c shell_state.c -o TEDShell
@@ -110,7 +110,6 @@ char *findExecutable(ShellState *state, char *const cmd) {
   DynArray path = state->path;
 
   // Path to the executable binary
-
   char *binpath = (char *)malloc(sizeof(char) * 512);
   for (int i = 0; i < path.count; i++) {
     int size = sprintf(binpath, "%s/%s", (char *)path.array[i], cmd);
@@ -131,17 +130,22 @@ int runExecutable(char **const argv, Redirects *const redirects) {
   if (pid < 0) {
     return -1;
   } else if (pid == 0) {
+    // Child process
     FILE *stdin = NULL, *stdout = NULL;
+
     if (redirects->stdin != NULL) {
       stdin = fopen(redirects->stdin, "r");
       dup2(fileno(stdin), STDIN_FILENO);
     }
+    
     if (redirects->stdout != NULL) {
       stdout = fopen(redirects->stdout, "w");
       dup2(fileno(stdout), STDOUT_FILENO);
     }
+    
     execv(argv[0], argv);
   } else {
+    // Parent process
     waitpid(pid, &wstatus, 0);
   }
 
