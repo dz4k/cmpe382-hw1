@@ -12,7 +12,7 @@
 #include "shell_state.h"
 
 // Use following command to compile:
-// g++ -g TEDShell.c dynarray.c shell_state.c -o TEDShell
+// g++ -g *.c -o TEDShell
 
 // To run the program
 // ./TEDShell
