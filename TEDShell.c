@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include "dynarray.h"
 #include "parser.h"
 #include "shell_state.h"
+#include "builtins.h"
 
 // Use following command to compile:
 // g++ -g TEDShell.c dynarray.c shell_state.c -o TEDShell
@@ -80,6 +82,19 @@ int runLine(ShellState *state, char *input) {
   // Parse
   Command cmd = parseCommand(input);
 
+  int status = runCommand(state, cmd);
+
+  CommandFree(&cmd);
+  return 0;
+}
+
+int runCommand(ShellState *state, Command cmd) {
+  for (int i = 0; builtins[i].name != NULL; i++) {
+    if (strcmp((char *)cmd.args.array[0], builtins[i].name) == 0) {
+      return builtins[i].builtin(state, &cmd.args);
+    }
+  }
+
   // Execute binary
   char *binary = findExecutable(state, (char *)cmd.args.array[0]);
   if (binary == NULL) {
@@ -88,13 +103,6 @@ int runLine(ShellState *state, char *input) {
   }
   cmd.args.array[0] = binary;
 
-  int status = runCommand(state, cmd);
-
-  CommandFree(&cmd);
-  return 0;
-}
-
-int runCommand(ShellState *state, Command cmd) {
   return runExecutable((char **)cmd.args.array, &cmd.redirects);
 }
 
