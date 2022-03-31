@@ -5,10 +5,12 @@
 #include "dynarray.h"
 
 typedef struct {
-  struct {
-    char *stdin;
-    char *stdout;
-  } redirects;
+  char *stdin;
+  char *stdout;
+} Redirects;
+
+typedef struct {
+  Redirects redirects;
   DynArray args;
 } Command;
 

@@ -35,7 +35,7 @@ int batch(int argc, char *const argv[]);
 int runLine(ShellState *state, char *const input);
 int runCommand(ShellState *state, Command cmd);
 char *findExecutable(ShellState *state, char *const cmd);
-int runExecutable(char **const argv);
+int runExecutable(char **const argv, Redirects *const redirects);
 
 int main(int argc, char *argv[]) {
 
@@ -95,7 +95,7 @@ int runLine(ShellState *state, char *input) {
 }
 
 int runCommand(ShellState *state, Command cmd) {
-  return runExecutable((char **)cmd.args.array);
+  return runExecutable((char **)cmd.args.array, &cmd.redirects);
 }
 
 char *findExecutable(ShellState *state, char *const cmd) {
@@ -115,17 +115,27 @@ char *findExecutable(ShellState *state, char *const cmd) {
   return NULL;
 }
 
-int runExecutable(char **const argv) {
+int runExecutable(char **const argv, Redirects *const redirects) {
   int wstatus;
 
   pid_t pid = fork();
 
-  if (pid < 0)
+  if (pid < 0) {
     return -1;
-  else if (pid == 0)
+  } else if (pid == 0) {
+    FILE *stdin = NULL, *stdout = NULL;
+    if (redirects->stdin != NULL) {
+      stdin = fopen(redirects->stdin, "r");
+      dup2(fileno(stdin), STDIN_FILENO);
+    }
+    if (redirects->stdout != NULL) {
+      stdout = fopen(redirects->stdout, "w");
+      dup2(fileno(stdout), STDOUT_FILENO);
+    }
     execv(argv[0], argv);
-  else
+  } else {
     waitpid(pid, &wstatus, 0);
+  }
 
   return wstatus;
 }
