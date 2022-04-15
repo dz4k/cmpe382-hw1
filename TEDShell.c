@@ -20,14 +20,16 @@
 // To run testcases
 // ./TEDShell-tester
 
-void readline(char *buffer) {
-  fgets(buffer, 100, stdin);
+int readline(char *buffer) {
+  if (fgets(buffer, 100, stdin) == NULL) return 1;
   buffer[strcspn(buffer, "\n")] = 0;
+  return 0;
 }
 
 enum {
   SHELL_OK,
   SHELL_ERR,
+  SHELL_END,
 };
 
 #define ERROR() write(STDERR_FILENO, "An error has occurred\n", 23)
@@ -58,8 +60,7 @@ int interactive() {
 
   while (1) {
     printf("TEDShell> ");
-    readline(input);
-    if (input[0] == EOF) {
+    if (readline(input) != 0) {
       break;
     }
     int status = runLine(&state, input);
@@ -73,7 +74,14 @@ int interactive() {
 }
 
 int batch(int argc, char *const argv[]) {
-  // TODO
+  char input[100];
+  ShellState state;
+  ShellStateInit(&state);
+
+  for (int i = 0; i < argc; i++) {
+    FILE* file = fopen(argv[i], "r");
+    if (readline(input) != 0) break;
+  }
   return 0;
 }
 
