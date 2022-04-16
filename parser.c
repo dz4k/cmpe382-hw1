@@ -34,7 +34,7 @@ Command* parseCommand(char *line) {
     if (*line == '&') {
       *line = '\0';
       state = ARG;
-      rv->parallelWith = parseCommand(line++);
+      rv->parallelWith = parseCommand(++line);
       if (rv->parallelWith->parseError) {
         goto parseError;
       }
@@ -83,13 +83,13 @@ Command* parseCommand(char *line) {
 
   }
 
-  if (rv->args.count == 0) {
-    goto parseError;
-  }
-
   if (blankLine) {
     CommandFree(rv);
     return NULL;
+  }
+
+  if (rv->args.count == 0) {
+    goto parseError;
   }
 
   return rv;
