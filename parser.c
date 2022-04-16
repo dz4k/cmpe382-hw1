@@ -83,13 +83,13 @@ Command* parseCommand(char *line) {
 
   }
 
-  if (rv->args.count == 0) {
-    goto parseError;
-  }
-
   if (blankLine) {
     CommandFree(rv);
     return NULL;
+  }
+
+  if (rv->args.count == 0) {
+    goto parseError;
   }
 
   return rv;
