@@ -32,7 +32,7 @@ int batch(int argc, char *const argv[]);
 int runLine(ShellState *state, char *const input);
 int runCommand(ShellState *state, Command cmd);
 char *findExecutable(ShellState *state, char *const cmd);
-int runExecutable(char **const argv, Redirects *const redirects);
+int runExecutable(char *const exe, char **const argv, Redirects *const redirects);
 
 int main(int argc, char *argv[]) {
 
@@ -105,9 +105,8 @@ int runCommand(ShellState *state, Command cmd) {
     ERROR();
     return 1;
   }
-  cmd.args.array[0] = binary;
 
-  return runExecutable((char **)cmd.args.array, &cmd.redirects);
+  return runExecutable(binary, (char **)cmd.args.array, &cmd.redirects);
 }
 
 char *findExecutable(ShellState *state, char *const cmd) {
@@ -126,7 +125,7 @@ char *findExecutable(ShellState *state, char *const cmd) {
   return NULL;
 }
 
-int runExecutable(char **const argv, Redirects *const redirects) {
+int runExecutable(char *const exe, char **const argv, Redirects *const redirects) {
   int wstatus;
 
   pid_t pid = fork();
@@ -147,7 +146,7 @@ int runExecutable(char **const argv, Redirects *const redirects) {
       dup2(fileno(stdout), STDOUT_FILENO);
     }
     
-    execv(argv[0], argv);
+    execv(exe, argv);
   } else {
     // Parent process
     waitpid(pid, &wstatus, 0);
