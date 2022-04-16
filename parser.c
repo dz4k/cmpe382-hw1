@@ -42,6 +42,11 @@ static void parse(Command* rv, char* line) {
       break;
     }
     if (*line == '>') {
+      if (rv->redirectStdout != NULL) {
+          // Multiple > in command
+          rv->parseError = true;
+          break;
+        }
       *line = '\0';
       state = REDIR_OUT;
       line++;
