@@ -10,7 +10,11 @@ BUILTIN(cd) {
     ERROR();
     return 1;
   }
-  return chdir((char *)args->array[0]);
+  if (chdir((char *)args->array[1]) != 0) {
+    ERROR();
+    return 1;
+  };
+  return 0;
 }
 
 BUILTIN(exit_) {
