@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "builtins.h"
 #include "dynarray.h"
@@ -26,8 +27,9 @@ BUILTIN(exit_) {
 }
 
 BUILTIN(path) {
+  DynArrayClear(&state->path);
   for (int i = 1; i < args->count; i++) {
-    DynArrayPush(&state->path, args->array[i]);
+    DynArrayPush(&state->path, strdup((char *)args->array[i]));
   }
   return 0;
 }
