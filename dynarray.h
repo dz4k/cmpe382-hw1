@@ -13,10 +13,13 @@ typedef struct {
 // Creates a new dynamic array.
 void DynArrayInit(DynArray *da);
 
-// Frees components of a dynamic array.
+// Frees components of a dynamic array. Does not free elements!
 void DynArrayFree(DynArray *da);
 
 // Adds an element to the end of the array.
 void DynArrayPush(DynArray *da, void *element);
+
+// Removes all elements from the array.
+void DynArrayClear(DynArray *da);
 
 #endif

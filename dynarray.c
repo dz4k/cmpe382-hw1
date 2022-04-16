@@ -26,3 +26,7 @@ void DynArrayPush(DynArray *da, void *element) {
 
   da->array[da->count++] = element;
 }
+
+void DynArrayClear(DynArray *da) {
+  da->count = 0;
+}
