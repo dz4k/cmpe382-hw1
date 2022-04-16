@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "dynarray.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 static bool whitespace(char ch);
@@ -16,6 +17,7 @@ typedef enum {
 void CommandInit(Command *cmd) {
   cmd->redirects.stdin = NULL;
   cmd->redirects.stdout = NULL;
+  cmd->parseError = false;
   DynArrayInit(&cmd->args);
 }
 
@@ -28,13 +30,13 @@ Command parseCommand(char *line) {
     if (line[i] == '<') {
       line[i] = '\0';
       state = REDIR_IN;
-      continue;
+      i++;
     }
 
     if (line[i] == '>') {
       line[i] = '\0';
       state = REDIR_OUT;
-      continue;
+      i++;
     }
 
     switch (state) {
@@ -54,6 +56,10 @@ Command parseCommand(char *line) {
       break;
 
     case REDIR_IN:
+      if (line[i] == '\0') {
+        rv.parseError = true;
+      }
+
       if (!whitespace(line[i])) {
         rv.redirects.stdin = &line[i];
         state = ARG;
@@ -61,12 +67,19 @@ Command parseCommand(char *line) {
       break;
 
     case REDIR_OUT:
+      if (line[i] == '\0') {
+        rv.parseError = true;
+      }
+
       if (!whitespace(line[i])) {
         rv.redirects.stdout = &line[i];
         state = ARG;
       }
       break;
+    default:
+    fprintf(stderr, "what");
     }
+
   }
   return rv;
 }

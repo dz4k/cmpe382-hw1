@@ -85,6 +85,11 @@ int runLine(ShellState *state, char *input) {
   // Parse
   Command cmd = parseCommand(input);
 
+  if (cmd.parseError) {
+    ERROR();
+    return 1;
+  }
+
   int status = runCommand(state, cmd);
 
   CommandFree(&cmd);

@@ -2,6 +2,7 @@
 #ifndef tedshell_parser
 #define tedshell_parser
 
+#include <stdbool.h>
 #include "dynarray.h"
 
 typedef struct {
@@ -11,6 +12,7 @@ typedef struct {
 
 typedef struct {
   Redirects redirects;
+  bool parseError;
   DynArray args;
 } Command;
 
