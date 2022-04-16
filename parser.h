@@ -5,15 +5,11 @@
 #include <stdbool.h>
 #include "dynarray.h"
 
-typedef struct {
-  char *stdin;
-  char *stdout;
-} Redirects;
-
-typedef struct {
-  Redirects redirects;
+typedef struct sCommand {
+  char *redirectStdout;
   bool parseError;
   DynArray args;
+  struct sCommand *parallelWith;
 } Command;
 
 Command parseCommand(char *line);

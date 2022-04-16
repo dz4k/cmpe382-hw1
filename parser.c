@@ -16,57 +16,80 @@ typedef enum {
 void CommandInit(Command *cmd) {
   cmd->redirectStdout = NULL;
   cmd->parseError = false;
+  cmd->parallelWith = NULL;
   DynArrayInit(&cmd->args);
 }
+
+static void parse(Command* rv, char* line);
 
 Command parseCommand(char *line) {
   Command rv;
   CommandInit(&rv);
 
+  parse(&rv, line);
+
+  return rv;
+}
+
+static void parse(Command* rv, char* line) {
+
   ParserState state = INITIAL;
-  for (int i = 0; line[i] != '\0'; i++) {
-    if (line[i] == '>') {
-      line[i] = '\0';
+  for (; *line != '\0'; line++) {
+    if (*line == '&') {
+      *line = '\0';
+      rv->parallelWith = (Command*) malloc(sizeof(Command));
+      parse(rv->parallelWith, line++);
+      break;
+    }
+    if (*line == '>') {
+      *line = '\0';
       state = REDIR_OUT;
-      i++;
+      line++;
     }
 
     switch (state) {
 
     case INITIAL:
-      if (!whitespace(line[i])) {
-        DynArrayPush(&rv.args, &line[i]);
+      if (!whitespace(*line)) {
+        if (rv->redirectStdout != NULL) {
+          // Multiple filenames after >
+          rv->parseError = true;
+          break;
+        }
+        DynArrayPush(&rv->args, line);
         state = ARG;
       }
       break;
 
     case ARG:
-      if (whitespace(line[i])) {
-        line[i] = '\0';
+      if (whitespace(*line)) {
+        *line = '\0';
         state = INITIAL;
       }
       break;
 
     case REDIR_OUT:
-      if (line[i] == '\0') {
-        rv.parseError = true;
+      if (*line == '\0') {
+        rv->parseError = true;
       }
 
-      if (!whitespace(line[i])) {
-        rv.redirectStdout = &line[i];
+      if (!whitespace(*line)) {
+        rv->redirectStdout = line;
         state = ARG;
       }
       break;
-    default:
-    fprintf(stderr, "what");
     }
 
   }
-  return rv;
 }
 
 static bool whitespace(char ch) {
   return ch == ' ' || ch == '\t' || ch == '\t';
 }
 
-void CommandFree(Command *cmd) { DynArrayFree(&cmd->args); }
+void CommandFree(Command *cmd) {
+  DynArrayFree(&cmd->args);
+  if (cmd->parallelWith != NULL) {
+    CommandFree(cmd->parallelWith);
+  }
+}
