@@ -10,13 +10,11 @@ static bool whitespace(char ch);
 typedef enum {
   INITIAL,
   ARG,
-  REDIR_IN,
   REDIR_OUT,
 } ParserState;
 
 void CommandInit(Command *cmd) {
-  cmd->redirects.stdin = NULL;
-  cmd->redirects.stdout = NULL;
+  cmd->redirectStdout = NULL;
   cmd->parseError = false;
   DynArrayInit(&cmd->args);
 }
@@ -27,12 +25,6 @@ Command parseCommand(char *line) {
 
   ParserState state = INITIAL;
   for (int i = 0; line[i] != '\0'; i++) {
-    if (line[i] == '<') {
-      line[i] = '\0';
-      state = REDIR_IN;
-      i++;
-    }
-
     if (line[i] == '>') {
       line[i] = '\0';
       state = REDIR_OUT;
@@ -55,24 +47,13 @@ Command parseCommand(char *line) {
       }
       break;
 
-    case REDIR_IN:
-      if (line[i] == '\0') {
-        rv.parseError = true;
-      }
-
-      if (!whitespace(line[i])) {
-        rv.redirects.stdin = &line[i];
-        state = ARG;
-      }
-      break;
-
     case REDIR_OUT:
       if (line[i] == '\0') {
         rv.parseError = true;
       }
 
       if (!whitespace(line[i])) {
-        rv.redirects.stdout = &line[i];
+        rv.redirectStdout = &line[i];
         state = ARG;
       }
       break;
