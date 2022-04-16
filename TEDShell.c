@@ -104,7 +104,15 @@ int runLine(ShellState *state, char *input) {
   return status;
 }
 
-int runCommand(ShellState *state, Command *cmd) {
+int runCommand(ShellState *state, Command *cmd) { 
+  int pid = 0;
+  if(cmd -> parallelWith != NULL){
+    pid = fork();
+   if(pid==0){
+     runCommand(state, cmd -> parallelWith);
+     exit(0);
+   }
+  }
   for (int i = 0; builtins[i].name != NULL; i++) {
     if (strcmp((char *)cmd->args.array[0], builtins[i].name) == 0) {
       return builtins[i].builtin(state, &cmd->args);
@@ -118,8 +126,14 @@ int runCommand(ShellState *state, Command *cmd) {
     return 1;
   }
 
-  return runExecutable(binary, (char **)cmd->args.array, cmd->redirectStdout);
-}
+
+  int result = runExecutable(binary, (char **)cmd->args.array, cmd->redirectStdout);
+  int status = 0;
+  if(pid !=0){
+  waitpid(pid, &status, 0);
+  }
+  return result;
+} 
 
 char *findExecutable(ShellState *state, char *const cmd) {
   DynArray path = state->path;
