@@ -15,9 +15,14 @@ typedef struct {
   Builtin builtin;
 } BuiltinsTableEntry;
 
+
+BUILTIN(cd);
+BUILTIN(exit_);
 BUILTIN(path);
 
 const BuiltinsTableEntry builtins[] = {
+    {"cd", cd},
+    {"exit", exit_},
     {"path", path},
     {NULL, NULL},
 };

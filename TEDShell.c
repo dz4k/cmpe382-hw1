@@ -20,19 +20,13 @@
 // To run testcases
 // ./TEDShell-tester
 
-int readline(char *buffer) {
-  if (fgets(buffer, 100, stdin) == NULL) return 1;
+int readline(FILE *file, char *buffer) {
+  if (fgets(buffer, 100, file) == NULL) return 1;
   buffer[strcspn(buffer, "\n")] = 0;
   return 0;
 }
 
-enum {
-  SHELL_OK,
-  SHELL_ERR,
-  SHELL_END,
-};
-
-#define ERROR() write(STDERR_FILENO, "An error has occurred\n", 23)
+#define ERROR() write(STDERR_FILENO, "An error has occurred\n", 22)
 
 int interactive();
 int batch(int argc, char *const argv[]);
@@ -60,11 +54,11 @@ int interactive() {
 
   while (1) {
     printf("TEDShell> ");
-    if (readline(input) != 0) {
+    if (readline(stdin, input) != 0) {
       break;
     }
     int status = runLine(&state, input);
-    if (status == SHELL_ERR) {
+    if (status != 0) {
       ERROR();
     }
   }
@@ -78,10 +72,18 @@ int batch(int argc, char *const argv[]) {
   ShellState state;
   ShellStateInit(&state);
 
-  for (int i = 0; i < argc; i++) {
-    FILE* file = fopen(argv[i], "r");
-    if (readline(input) != 0) break;
+  if (argc != 2) exit(1);
+
+  FILE* file = fopen(argv[1], "r");
+  if (file == NULL) exit(1);
+  
+  while (readline(file, input) == 0) {
+    int status = runLine(&state, input);
+    if (status != 0) {
+      ERROR();
+    }
   }
+
   return 0;
 }
 
@@ -93,7 +95,7 @@ int runLine(ShellState *state, char *input) {
   int status = runCommand(state, cmd);
 
   CommandFree(&cmd);
-  return 0;
+  return status;
 }
 
 int runCommand(ShellState *state, Command cmd) {
@@ -107,7 +109,7 @@ int runCommand(ShellState *state, Command cmd) {
   char *binary = findExecutable(state, (char *)cmd.args.array[0]);
   if (binary == NULL) {
     CommandFree(&cmd);
-    return SHELL_ERR;
+    return 1;
   }
   cmd.args.array[0] = binary;
 
