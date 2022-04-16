@@ -12,7 +12,7 @@ typedef struct sCommand {
   struct sCommand *parallelWith;
 } Command;
 
-Command parseCommand(char *line);
+Command* parseCommand(char *line);
 void CommandFree(Command *cmd);
 
 #endif

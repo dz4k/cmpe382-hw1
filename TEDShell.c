@@ -30,7 +30,7 @@ int readline(FILE *file, char *buffer) {
 int interactive();
 int batch(int argc, char *const argv[]);
 int runLine(ShellState *state, char *const input);
-int runCommand(ShellState *state, Command cmd);
+int runCommand(ShellState *state, Command *cmd);
 char *findExecutable(ShellState *state, char *const cmd);
 int runExecutable(char *const exe, char **const argv, char *const redirectStdout);
 
@@ -68,10 +68,16 @@ int batch(int argc, char *const argv[]) {
   ShellState state;
   ShellStateInit(&state);
 
-  if (argc != 2) exit(1);
+  if (argc != 2) {
+    ERROR();
+    exit(1);
+  }
 
   FILE* file = fopen(argv[1], "r");
-  if (file == NULL) exit(1);
+  if (file == NULL) {
+    ERROR();
+    exit(1);
+  }
   
   while (readline(file, input) == 0) {
     int status = runLine(&state, input);
@@ -83,34 +89,36 @@ int batch(int argc, char *const argv[]) {
 int runLine(ShellState *state, char *input) {
 
   // Parse
-  Command cmd = parseCommand(input);
+  Command *cmd = parseCommand(input);
 
-  if (cmd.parseError) {
+  if (cmd == NULL) return 0;
+
+  if (cmd->parseError) {
     ERROR();
     return 1;
   }
 
   int status = runCommand(state, cmd);
 
-  CommandFree(&cmd);
+  CommandFree(cmd);
   return status;
 }
 
-int runCommand(ShellState *state, Command cmd) {
+int runCommand(ShellState *state, Command *cmd) {
   for (int i = 0; builtins[i].name != NULL; i++) {
-    if (strcmp((char *)cmd.args.array[0], builtins[i].name) == 0) {
-      return builtins[i].builtin(state, &cmd.args);
+    if (strcmp((char *)cmd->args.array[0], builtins[i].name) == 0) {
+      return builtins[i].builtin(state, &cmd->args);
     }
   }
 
   // Execute binary
-  char *binary = findExecutable(state, (char *)cmd.args.array[0]);
+  char *binary = findExecutable(state, (char *)cmd->args.array[0]);
   if (binary == NULL) {
     ERROR();
     return 1;
   }
 
-  return runExecutable(binary, (char **)cmd.args.array, cmd.redirectStdout);
+  return runExecutable(binary, (char **)cmd->args.array, cmd->redirectStdout);
 }
 
 char *findExecutable(ShellState *state, char *const cmd) {

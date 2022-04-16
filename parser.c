@@ -20,51 +20,42 @@ void CommandInit(Command *cmd) {
   DynArrayInit(&cmd->args);
 }
 
-static void parse(Command* rv, char* line);
+Command* parseCommand(char *line) {
+  Command *rv = (Command*) malloc(sizeof(Command));
+  CommandInit(rv);
 
-Command parseCommand(char *line) {
-  Command rv;
-  CommandInit(&rv);
-
-  parse(&rv, line);
-
-  if (rv.args.count == 0) {
-    // No command, i.e. just a redirection
-    rv.parseError = true;
-  }
-
-  return rv;
-}
-
-static void parse(Command* rv, char* line) {
+  bool blankLine = true;
 
   ParserState state = INITIAL;
   for (; *line != '\0'; line++) {
+    if (!whitespace(*line)) {
+      blankLine = false;
+    }
     if (*line == '&') {
       *line = '\0';
-      rv->parallelWith = (Command*) malloc(sizeof(Command));
-      parse(rv->parallelWith, line++);
+      state = ARG;
+      rv->parallelWith = parseCommand(line++);
+      if (rv->parallelWith->parseError) {
+        goto parseError;
+      }
       break;
     }
     if (*line == '>') {
       if (rv->redirectStdout != NULL) {
-          // Multiple > in command
-          rv->parseError = true;
-          break;
-        }
+        // Multiple > in command
+        goto parseError;
+      }
       *line = '\0';
       state = REDIR_OUT;
       line++;
     }
 
     switch (state) {
-
     case INITIAL:
       if (!whitespace(*line)) {
         if (rv->redirectStdout != NULL) {
           // Multiple filenames after >
-          rv->parseError = true;
-          break;
+          goto parseError;
         }
         DynArrayPush(&rv->args, line);
         state = ARG;
@@ -80,7 +71,7 @@ static void parse(Command* rv, char* line) {
 
     case REDIR_OUT:
       if (*line == '\0') {
-        rv->parseError = true;
+        goto parseError;
       }
 
       if (!whitespace(*line)) {
@@ -91,6 +82,21 @@ static void parse(Command* rv, char* line) {
     }
 
   }
+
+  if (rv->args.count == 0) {
+    goto parseError;
+  }
+
+  if (blankLine) {
+    CommandFree(rv);
+    return NULL;
+  }
+
+  return rv;
+
+parseError:
+  rv->parseError = true;
+  return rv;
 }
 
 static bool whitespace(char ch) {
