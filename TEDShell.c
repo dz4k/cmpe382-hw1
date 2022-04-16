@@ -8,6 +8,7 @@
 
 #include "builtins.h"
 #include "dynarray.h"
+#include "error.h"
 #include "parser.h"
 #include "shell_state.h"
 
@@ -25,8 +26,6 @@ int readline(FILE *file, char *buffer) {
   buffer[strcspn(buffer, "\n")] = 0;
   return 0;
 }
-
-#define ERROR() write(STDERR_FILENO, "An error has occurred\n", 22)
 
 int interactive();
 int batch(int argc, char *const argv[]);
@@ -58,9 +57,6 @@ int interactive() {
       break;
     }
     int status = runLine(&state, input);
-    if (status != 0) {
-      ERROR();
-    }
   }
 
   ShellStateFree(&state);
@@ -79,9 +75,6 @@ int batch(int argc, char *const argv[]) {
   
   while (readline(file, input) == 0) {
     int status = runLine(&state, input);
-    if (status != 0) {
-      ERROR();
-    }
   }
 
   return 0;
@@ -109,6 +102,7 @@ int runCommand(ShellState *state, Command cmd) {
   char *binary = findExecutable(state, (char *)cmd.args.array[0]);
   if (binary == NULL) {
     CommandFree(&cmd);
+    ERROR();
     return 1;
   }
   cmd.args.array[0] = binary;
