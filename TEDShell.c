@@ -101,7 +101,6 @@ int runCommand(ShellState *state, Command cmd) {
   // Execute binary
   char *binary = findExecutable(state, (char *)cmd.args.array[0]);
   if (binary == NULL) {
-    CommandFree(&cmd);
     ERROR();
     return 1;
   }
