@@ -28,6 +28,11 @@ Command parseCommand(char *line) {
 
   parse(&rv, line);
 
+  if (rv.args.count == 0) {
+    // No command, i.e. just a redirection
+    rv.parseError = true;
+  }
+
   return rv;
 }
 

@@ -5,7 +5,7 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
-      "args": [],
+      "args": ["tests/8.in"],
       "stopAtEntry": false,
       "cwd": "${workspaceRoot}",
       "environment": [],
