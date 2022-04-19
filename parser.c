@@ -34,9 +34,15 @@ Command* parseCommand(char *line) {
     if (*line == '&') {
       *line = '\0';
       state = ARG;
-      rv->parallelWith = parseCommand(++line);
-      if (rv->parallelWith->parseError) {
-        goto parseError;
+      Command* parallelWith = parseCommand(++line);
+      if (parallelWith == NULL) {
+        rv->async = true;
+      } else {
+        if (parallelWith->parseError) {
+          goto parseError;
+        }
+        rv->parallelWith = parallelWith;
+        rv->async = parallelWith->async;
       }
       break;
     }

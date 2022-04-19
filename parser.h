@@ -8,6 +8,7 @@
 typedef struct sCommand {
   char *redirectStdout;
   bool parseError;
+  bool async;
   DynArray args;
   struct sCommand *parallelWith;
 } Command;
