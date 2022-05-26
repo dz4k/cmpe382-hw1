@@ -20,11 +20,6 @@ BUILTIN(cd);
 BUILTIN(exit_);
 BUILTIN(path);
 
-const BuiltinsTableEntry builtins[] = {
-    {"cd", cd},
-    {"exit", exit_},
-    {"path", path},
-    {NULL, NULL},
-};
+const BuiltinsTableEntry builtins[4];
 
 #endif

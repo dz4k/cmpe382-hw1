@@ -6,6 +6,14 @@
 #include "dynarray.h"
 #include "error.h"
 
+
+const BuiltinsTableEntry builtins[] = {
+    {"cd", cd},
+    {"exit", exit_},
+    {"path", path},
+    {NULL, NULL},
+};
+
 BUILTIN(cd) {
   if (args->count != 2) {
     ERROR();
